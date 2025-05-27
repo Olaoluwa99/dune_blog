@@ -1,10 +1,11 @@
 import 'package:dune_blog/core/error/exceptions.dart';
 import 'package:dune_blog/core/error/failure.dart';
 import 'package:dune_blog/feature/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:dune_blog/feature/auth/domain/entities/user.dart';
 import 'package:dune_blog/feature/auth/domain/repository/auth_repository.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+
+import '../../../../core/common/entities/user.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -44,6 +45,19 @@ class AuthRepositoryImpl implements AuthRepository {
       return right(user);
     } on sb.AuthException catch (e) {
       return left(Failure(e.message));
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, User>> currentUser() async {
+    try {
+      final user = await remoteDataSource.getCurrentUserData();
+      if (user == null) {
+        return left(Failure('User not logged in!'));
+      }
+      return right(user);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }

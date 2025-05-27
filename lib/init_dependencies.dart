@@ -1,6 +1,8 @@
+import 'package:dune_blog/core/common/cubits/app_user/app_user_cubit.dart';
 import 'package:dune_blog/feature/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:dune_blog/feature/auth/data/repositories/auth_repository_impl.dart';
 import 'package:dune_blog/feature/auth/domain/repository/auth_repository.dart';
+import 'package:dune_blog/feature/auth/domain/usecases/current_user.dart';
 import 'package:dune_blog/feature/auth/domain/usecases/user_login.dart';
 import 'package:dune_blog/feature/auth/domain/usecases/user_sign_up.dart';
 import 'package:dune_blog/feature/auth/presentation/bloc/auth_bloc.dart';
@@ -18,22 +20,27 @@ Future<void> initDependencies() async {
     anonKey: AppSecrets.supabaseAnonKey,
   );
   serviceLocator.registerLazySingleton(() => supabase.client);
+
+  serviceLocator.registerLazySingleton(() => AppUserCubit());
 }
 
 void _initAuth() {
-  serviceLocator.registerFactory<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(serviceLocator()),
-  );
-
-  serviceLocator.registerFactory<AuthRepository>(
-    () => AuthRepositoryImpl(serviceLocator()),
-  );
-
-  serviceLocator.registerFactory(() => UserSignUp(serviceLocator()));
-
-  serviceLocator.registerFactory(() => UserLogin(serviceLocator()));
-
-  serviceLocator.registerLazySingleton(
-    () => AuthBloc(userSignUp: serviceLocator(), userLogin: serviceLocator()),
-  );
+  serviceLocator
+    ..registerFactory<AuthRemoteDataSource>(
+      () => AuthRemoteDataSourceImpl(serviceLocator()),
+    )
+    ..registerFactory<AuthRepository>(
+      () => AuthRepositoryImpl(serviceLocator()),
+    )
+    ..registerFactory(() => UserSignUp(serviceLocator()))
+    ..registerFactory(() => UserLogin(serviceLocator()))
+    ..registerFactory(() => CurrentUser(serviceLocator()))
+    ..registerLazySingleton(
+      () => AuthBloc(
+        userSignUp: serviceLocator(),
+        userLogin: serviceLocator(),
+        currentUser: serviceLocator(),
+        appUserCubit: serviceLocator(),
+      ),
+    );
 }

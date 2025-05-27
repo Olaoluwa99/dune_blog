@@ -1,8 +1,9 @@
 import 'package:dune_blog/core/error/failure.dart';
 import 'package:dune_blog/core/usecases/usecase.dart';
-import 'package:dune_blog/feature/auth/domain/entities/user.dart';
 import 'package:dune_blog/feature/auth/domain/repository/auth_repository.dart';
 import 'package:fpdart/fpdart.dart';
+
+import '../../../../core/common/entities/user.dart';
 
 class UserSignUp implements UserCase<User, UserSignUpParams> {
   final AuthRepository authRepository;
