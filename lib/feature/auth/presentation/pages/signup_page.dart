@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/utils/show_snackbar.dart';
+import '../../../blog/presentation/pages/blog_page.dart';
 
 class SignupPage extends StatefulWidget {
   static route() => MaterialPageRoute(builder: (context) => const SignupPage());
@@ -41,19 +42,17 @@ class _SignupPageState extends State<SignupPage> {
           listener: (context, state) {
             if (state is AuthFailure) {
               showSnackBar(context, state.message);
-            }
-
-            if (state is AuthSuccess) {
-              showSnackBar(context, "Your account has been created");
+            } else if (state is AuthSuccess) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                BlogPage.route(),
+                (route) => false,
+              );
             }
           },
           builder: (context, state) {
             if (state is AuthLoading) {
               return const Loader();
-            }
-
-            if (state is AuthFailure) {
-              return Center(child: Text(state.message));
             }
 
             return Form(

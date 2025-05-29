@@ -1,15 +1,18 @@
+import 'package:dune_blog/core/constants/constants.dart';
 import 'package:dune_blog/core/error/exceptions.dart';
 import 'package:dune_blog/core/error/failure.dart';
+import 'package:dune_blog/core/network/connection_checker.dart';
 import 'package:dune_blog/feature/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:dune_blog/feature/auth/data/models/user_model.dart';
 import 'package:dune_blog/feature/auth/domain/repository/auth_repository.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../../../../core/common/entities/user.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
-  const AuthRepositoryImpl(this.remoteDataSource);
+  final ConnectionChecker connectionChecker;
+  const AuthRepositoryImpl(this.remoteDataSource, this.connectionChecker);
 
   @override
   Future<Either<Failure, User>> loginWithEmailPassword({
@@ -41,10 +44,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   Future<Either<Failure, User>> _getUser(Future<User> Function() fn) async {
     try {
+      if (!await (connectionChecker.isConnected)) {
+        return left(Failure(Constants.noConnectionErrorMessage));
+      }
       final user = await fn();
       return right(user);
-    } on sb.AuthException catch (e) {
-      return left(Failure(e.message));
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
@@ -53,6 +57,21 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, User>> currentUser() async {
     try {
+      if (!await (connectionChecker.isConnected)) {
+        final session = remoteDataSource.currentUserSession;
+
+        if (session == null) {
+          return left(Failure('User not logged in!'));
+        }
+
+        return right(
+          UserModel(
+            id: session.user.id,
+            email: session.user.email ?? '',
+            name: '',
+          ),
+        );
+      }
       final user = await remoteDataSource.getCurrentUserData();
       if (user == null) {
         return left(Failure('User not logged in!'));
